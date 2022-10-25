@@ -1,5 +1,5 @@
 import User from "../models/User.js"
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { createError } from "../utils/error.js";
 import jwt from "jsonwebtoken"
 
@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken"
 export const register = async (req, res, next) => {
     try {
         const salt = bcrypt.genSaltSync(10)
-        const hash = bcrypt.hashSync("B4c0/\/", salt)
+        const hash = bcrypt.hashSync(req.body.password, salt)
 
         const newUser = new User({
             username: req.body.username,
@@ -15,7 +15,7 @@ export const register = async (req, res, next) => {
             password: hash,
         })
         await newUser.save()
-        res.status(200).send("User has been created")
+        res.status(200).send(`User ${req.body.username} has been created`)
     }
     catch (err) {
         next(err)
@@ -29,11 +29,8 @@ export const login = async (req, res, next) => {
         if (!user) return next(createError(404, "User not found!"))
 
         const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password)
-        if(!isPasswordCorrect) return next(createError(400, "Wrong password or username!"))
+        if(!isPasswordCorrect) return next(createError(400, "Wrong password, try again !"))
 
-        // if (req.body.password != user.password) {
-        //     return next(createError(400, "Wrong password or username!"))
-        // }
 
         const token = jwt.sign(
             {id: user._id, isAdmin: user.isAdmin}, 
@@ -47,10 +44,6 @@ export const login = async (req, res, next) => {
             })
             .status(200)
             .json({ ...otherDetails })
-        // const { password, isAdmin, ...otherDetails } = user._doc
-        // res
-        //     .status(200)
-        //     .json({ ...otherDetails })
     }
     catch (err) {
         next(err)
