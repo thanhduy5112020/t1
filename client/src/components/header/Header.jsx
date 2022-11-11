@@ -3,17 +3,20 @@ import { faBed, faTaxi, faCalendarDays, faPerson, faBuilding, faChampagneGlasses
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { DateRange } from 'react-date-range';
-import { useState} from 'react'
+import { useState } from 'react'
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { format } from "date-fns"
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { SearchContext } from "../../context/SearchContext";
+import { AuthContext } from "../../context/AuthContext";
 
 const Header = ({ type }) => {
   const [destination, setDestination] = useState("")
   const [openDate, setOpenDate] = useState(false)
 
-  const [date, setDate] = useState([
+  const [dates, setDates] = useState([
     {
       startDate: new Date(),
       endDate: new Date(),
@@ -29,6 +32,7 @@ const Header = ({ type }) => {
   })
 
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext)
 
   const handleOption = (name, operation) => {
     setOptions((prev) => {
@@ -40,8 +44,11 @@ const Header = ({ type }) => {
   }
 
   const handleSearch = () => {
-    navigate("/hotels", {state: {destination, date, options}})
+    dispatch({ type: "NEW_SEARCH", payload: { destination, dates, options } })
+    navigate("/hotels", { state: { destination, dates, options } })
   }
+
+  const { dispatch } = useContext(SearchContext)
 
   return (
     <div className="header">
@@ -83,23 +90,23 @@ const Header = ({ type }) => {
             <p className="headerDesc">We provide spaces for locals and travellers with comfort, convenience,
               and value for money without compromising on quality.</p>
 
-            <button className="headerBtn">Sign in / Register</button>
+            {!user && <button className="headerBtn">Sign in / Register</button>}
 
             <div className="headerSearch">
 
               <div className="headerSearchItem">
                 <FontAwesomeIcon icon={faBuilding} className="headerIcon" />
-                <input type="text" placeholder="Where are you going?" className="headerSearchInput" onChange={e=>setDestination(e.target.value)}/>
+                <input type="text" placeholder="Where are you going?" className="headerSearchInput" onChange={e => setDestination(e.target.value)} />
 
               </div>
               <div className="headerSearchItem">
                 <FontAwesomeIcon icon={faCalendarDays} className="headerIcon" />
-                <span onClick={() => setOpenDate(!openDate)} className="headerSearchText">{`${format(date[0].startDate, "dd/MM/yyyy")} to ${format(date[0].endDate, "dd/MM/yyyy")}`}</span>
+                <span onClick={() => setOpenDate(!openDate)} className="headerSearchText">{`${format(dates[0].startDate, "dd/MM/yyyy")} to ${format(dates[0].endDate, "dd/MM/yyyy")}`}</span>
                 {openDate && <DateRange
                   editableDateInputs={true}
-                  onChange={item => setDate([item.selection])}
+                  onChange={item => setDates([item.selection])}
                   moveRangeOnFirstSelection={false}
-                  ranges={date}
+                  ranges={dates}
                   className="date"
                   minDate={new Date()}
                 />}
